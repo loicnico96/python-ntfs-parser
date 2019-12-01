@@ -5,13 +5,9 @@ class AbstractFileReader(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def setPointer(self, offset):
-        raise NotImplementedError("setPointer(offset) was not implemented.")
-
-    @abstractmethod
-    def readBytes(self, length):
-        raise NotImplementedError("readBytes(length) was not implemented.")
+    def readBytes(self, offset, length):
+        raise NotImplementedError('Not implemented.')
 
     @abstractmethod
     def close(self):
-        raise NotImplementedError("close() was not implemented.")
+        raise NotImplementedError('Not implemented.')

@@ -2,7 +2,7 @@
 import Object
 
 class NTFSReference(object):
-    __index = 0L
+    __index = 0
     __sequence = 0
 
     def __init__(self, index, sequence):

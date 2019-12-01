@@ -6,7 +6,7 @@ from NTFSReference import NTFSReference
 
 BOOT_SECTOR_OFFSET = 0
 BOOT_SECTOR_LENGTH = 512
-MFT_ROOT_INDEX = 5L
+MFT_ROOT_INDEX = 5
 
 class NTFSDrive(object):
     __driveName = None
@@ -18,8 +18,7 @@ class NTFSDrive(object):
         self.__driveName = driveName
         self.__fileReader = fileReader
         # Fetch the configuration from the Virtual Boot Sector
-        self.__fileReader.setPointer(BOOT_SECTOR_OFFSET)
-        vbsBytes = self.__fileReader.readBytes(BOOT_SECTOR_LENGTH)
+        vbsBytes = self.__fileReader.readBytes(BOOT_SECTOR_OFFSET, BOOT_SECTOR_LENGTH)
         self.__config = NTFSDriveConfig(vbsBytes)
         # Fetch the root entry in the Master File Table
         self.__root = NTFSEntry(self, MFT_ROOT_INDEX)

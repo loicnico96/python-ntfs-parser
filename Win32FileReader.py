@@ -1,8 +1,5 @@
 
-import sys
-import Bytes
 import win32file
-from pywintypes import Unicode
 from AbstractFileReader import AbstractFileReader
 
 class Win32FileReader(AbstractFileReader):
@@ -19,14 +16,16 @@ class Win32FileReader(AbstractFileReader):
                 None,
                 win32file.OPEN_EXISTING,
                 0, 0)
-            self.setPointer(0)
         except Exception as err:
             raise RuntimeError('Could not open the specified file.')
 
-    def setPointer(self, offset):
-        win32file.SetFilePointer(self.__handle, offset, win32file.FILE_BEGIN)
+    def isValid(self):
+        return self.__handle != None
 
-    def readBytes(self, length):
+    def readBytes(self, offset, length):
+        if self.__handle == None:
+            raise RuntimeError('Could not read from an invalid file handle.')
+        win32file.SetFilePointer(self.__handle, offset, win32file.FILE_BEGIN)
         rc, bytes = win32file.ReadFile(self.__handle, length)
         return bytes
 
@@ -34,4 +33,7 @@ class Win32FileReader(AbstractFileReader):
         return self.__filename
 
     def close(self):
+        if self.__handle == None:
+            raise RuntimeError('Could not close an invalid file handle.')
         win32file.CloseHandle(self.__handle)
+        self.__handle = None

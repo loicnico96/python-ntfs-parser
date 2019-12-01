@@ -15,7 +15,7 @@ class NTFSEntry(object):
     __contentSize = 0
     __drive = None
     __filename = None
-    __index = 0L
+    __index = 0
     __isDir = False
     __parent = None
     __parentRef = None
@@ -26,9 +26,9 @@ class NTFSEntry(object):
         self.__index = index
 
         # Retrieve the MFT entry from the drive
-        drive.reader().setPointer(drive.entryOffset(index))
+        entryOffset = drive.entryOffset(index)
         entryLength = MFT_ENTRY_SECTORS * drive.config().bytesPerSector
-        entryBytes = drive.reader().readBytes(entryLength)
+        entryBytes = drive.reader().readBytes(entryOffset, entryLength)
 
         # Check if the header is correct
         if entryBytes[0x00:0x04] != b'FILE':
@@ -126,8 +126,8 @@ class NTFSEntry(object):
                 for datarun in dataruns:
                     recordSize = datarun[1] * clusterSize
                     recordIndex = recordIndex + datarun[0]
-                    self.__drive.reader().setPointer(self.__drive.clusterOffset(recordIndex))
-                    record = self.__drive.reader().readBytes(recordSize)
+                    recordOffset = self.__drive.clusterOffset(recordIndex)
+                    record = self.__drive.reader().readBytes(recordOffset, recordSize)
                     records.append(record)
                 self.__children = NTFSFileIndex(self.__drive, indexRoot, records)
             else:
