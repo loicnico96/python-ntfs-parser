@@ -1,7 +1,7 @@
 
 import sys
-from Win32FileReader import Win32FileReader
-from NTFSDrive import NTFSDrive
+from NTFS.NTFSDrive import NTFSDrive
+from NTFS.Win32FileReader import Win32FileReader
 
 KILOBYTES = 2**10
 MEGABYTES = 2**20
@@ -40,9 +40,7 @@ while True:
         elif cmd == 'dir':
             if argc != 0:
                 raise IOError('This command excepted %d parameters, received %d.' % (0, argc))
-            ls = cd.children().list()
-            for line in ls:
-                print(line)
+            cd.children().dump()
         elif cmd == 'cd':
             if argc != 1:
                 raise IOError('This command excepted %d parameters, received %d.' % (1, argc))

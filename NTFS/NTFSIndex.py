@@ -2,7 +2,7 @@
 import Bytes
 import Object
 from datetime import datetime
-from FileAttribute import FileAttribute
+from NTFSAttribute import NTFSAttribute
 from NTFSReference import NTFSReference
 
 MAGIC_WORD_INDX = b'INDX'
@@ -13,7 +13,7 @@ TAG_DIRECTORY = '<DIR>'
 def toUNIX(timestamp):
     return max(0, timestamp / 1e7 - 11644473600)
 
-class NTFSFileIndex(object):
+class NTFSIndex(object):
     __drive = None
     __entries = []
 
@@ -41,7 +41,7 @@ class NTFSFileIndex(object):
             offset += length
 
     def __init__(self, drive, indexRoot, indexRecords = []):
-        bytes = indexRoot.content
+        bytes = indexRoot.content()
         self.__drive = drive
         self.__entries = []
         self.attributeType = Bytes.toUnsigned32(bytes, 0x00)
@@ -58,10 +58,10 @@ class NTFSFileIndex(object):
             self.addRecord(bytes, startingOffset)
 
     def __repr__(self):
-        return Object.inspect('NTFSFileIndex')
+        return Object.inspect('NTFSIndex')
 
     def __str__(self):
-        return Object.inspect('NTFSFileIndex', self)
+        return Object.inspect('NTFSIndex', self)
 
     def ref(self, filename):
         ent = Object.find(self.__entries, lambda ent: ent[2] == filename)
@@ -74,7 +74,7 @@ class NTFSFileIndex(object):
     def filenames(self):
         return [ent[2] for ent in self.__entries]
 
-    def list(self):
+    def dump(self):
         res = []
         totalDirs = 0
         totalSize = 0
@@ -92,15 +92,13 @@ class NTFSFileIndex(object):
                 totalSize += contentSize
                 sz = format(contentSize, '>14,').replace(',', ' ')
             dt = datetime.fromtimestamp(tsModified).strftime('%d/%m/%Y  %H:%M')
-            des = '{0:<20}{1:<15}{2}'.format(dt, sz, filename)
+            print('{0:<20}{1:<15}{2}'.format(dt, sz, filename))
             indexes.add(index)
-            res.append(des)
-        ttf = '{0:,} files'.format(totalFiles)
-        ttd = '{0:,} directories'.format(totalDirs)
-        tts = '{0:,} bytes'.format(totalSize).replace(',', ' ')
-        res.append('{0:<15}{1:<15}{2}'.format('', ttf, tts))
-        res.append('{0:<15}{1}'.format('', ttd))
-        return res
+        tf = '{0:,} files'.format(totalFiles)
+        td = '{0:,} directories'.format(totalDirs)
+        tz = '{0:,} bytes'.format(totalSize).replace(',', ' ')
+        print('{0:<15}{1:<15}{2}'.format('', tf, tz))
+        print('{0:<15}{1}'.format('', td))
 
     def refs(self):
         return [NTFSReference(ent[0], ent[1]) for ent in self.__entries]
