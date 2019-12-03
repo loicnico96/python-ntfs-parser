@@ -10,6 +10,17 @@ MAGIC_WORD_INDX = b'INDX'
 TAG_ALIAS = '<ALIAS>'
 TAG_DIRECTORY = '<DIR>'
 
+def recordFixup(bytes, sequenceNumber, sequenceArray):
+    b = bytearray(bytes)
+    if len(bytes) != 512 * len(sequenceArray):
+        raise RuntimeError('Not the right length.')
+    for i in range(len(sequenceArray)):
+        seq = bytes[512 * (i + 1) - 2 : 512 * (i + 1)]
+        if seq != sequenceNumber:
+            raise RuntimeError('Bad sequence number.')
+        b[512 * (i + 1) - 2 : 512 * (i + 1)] = sequenceArray[i]
+    return b
+
 def toUNIX(timestamp):
     return max(0, timestamp / 1e7 - 11644473600)
 
@@ -55,7 +66,13 @@ class NTFSIndex(object):
             if bytes[0x00:0x04] != MAGIC_WORD_INDX:
                 raise ValueError('This is not a valid INDX record.')
             startingOffset = Bytes.toUnsigned32(bytes, 0x18) + 0x18
-            self.addRecord(bytes, startingOffset)
+            updateSeqOffset = Bytes.toUnsigned16(bytes, 0x04)
+            updateSeqLength = Bytes.toUnsigned16(bytes, 0x06)
+            updateSeqWord = bytes[updateSeqOffset : updateSeqOffset + 2]
+            updateSeq = [bytes[updateSeqOffset + i * 2 : updateSeqOffset + i * 2 + 2]  for i in range(1, updateSeqLength)]
+            print([updateSeqWord])
+            print(updateSeq)
+            self.addRecord(recordFixup(bytes, updateSeqWord, updateSeq)[startingOffset:])
 
     def __repr__(self):
         return Object.inspect('NTFSIndex')

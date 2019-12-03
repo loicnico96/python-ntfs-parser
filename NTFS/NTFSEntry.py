@@ -32,6 +32,7 @@ class NTFSEntry(object):
 
         # Check if the header is correct
         if entryBytes[0x00:0x04] != b'FILE':
+            Bytes.dump(entryBytes)
             raise RuntimeError('This is not a valid FILE entry.')
 
         # Parse the MFT header information
@@ -109,6 +110,24 @@ class NTFSEntry(object):
     def attribute(self, type):
         return Object.find(self.attributes(), lambda attr: attr.type() == type)
 
+    def content(self):
+        data = self.attribute(0x80)
+        if data == None:
+            return None
+        if data.isResident():
+            return data.content()
+        if data.dataruns():
+            bytes = b''
+            recordIndex = 0
+            clusterSize = self.__drive.config().sectorsPerCluster * self.__drive.config().bytesPerSector
+            for datarun in data.dataruns():
+                recordIndex += datarun[0]
+                recordLength = datarun[1] * clusterSize
+                recordOffset = self.__drive.clusterOffset(recordIndex)
+                bytes += self.__drive.reader().readBytes(recordOffset, recordLength)
+            return bytes
+        return None
+
     def contentSize(self):
         return self.__contentSize
 
@@ -122,12 +141,14 @@ class NTFSEntry(object):
             if indexAlloc != None:
                 recordIndex = 0
                 clusterSize = self.__drive.config().sectorsPerCluster * self.__drive.config().bytesPerSector
+                print(indexAlloc.dataruns())
                 for datarun in indexAlloc.dataruns():
                     recordIndex += datarun[0]
-                    recordLength = datarun[1] * clusterSize
-                    recordOffset = self.__drive.clusterOffset(recordIndex)
-                    record = self.__drive.reader().readBytes(recordOffset, recordLength)
-                    indexRecords.append(record)
+                    clusterCount = datarun[1]
+                    for clusterIndex in range(clusterCount):
+                        recordOffset = self.__drive.clusterOffset(recordIndex + clusterIndex)
+                        record = self.__drive.reader().readBytes(recordOffset, clusterSize)
+                        indexRecords.append(record)
             self.__children = NTFSIndex(self.__drive, indexRoot, indexRecords)
             return self.__children
         return None

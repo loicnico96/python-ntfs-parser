@@ -1,5 +1,6 @@
 
 import sys
+import NTFS.Bytes as Bytes
 from NTFS.NTFSDrive import NTFSDrive
 from NTFS.Win32FileReader import Win32FileReader
 
@@ -54,9 +55,17 @@ while True:
                 if not cdNew:
                     raise IOError('This path does not exist.')
                 if not cdNew.isDir():
+                    content = cdNew.content()
+                    if content:
+                        Bytes.dump(content, maxLines = 100)
+                    else:
+                        for attr in cdNew.attributes():
+                            print(attr)
                     raise IOError('This path is not a directory.')
             cd = cdNew
         else:
             raise IOError('This command does not exist.')
     except IOError as io:
         print('Invalid input: %s' % io)
+    #except Exception as exception:
+    #    print(exception)
